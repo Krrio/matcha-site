@@ -20,10 +20,10 @@ type Product = {
 };
 
 const products: Product[] = [
-  { id: "ceremonial", name: "Ceremonial Matcha", price: 29, image: "/images/ceremonial-cup.webp", note: "First-harvest leaves sourced from Japan." },
-  { id: "latte", name: "Matcha Latte Blend", price: 24, image: "/images/latte-cup.webp", dark: true, note: "Stone-ground, silky and made for milk." },
-  { id: "vanilla", name: "Vanilla Matcha", price: 26, image: "/images/vanilla-cup.webp", note: "Soft vanilla notes with everyday energy." },
-  { id: "coconut", name: "Coconut Matcha", price: 28, image: "/images/coconut-cup.webp", note: "Creamy coconut finish, naturally refreshing." },
+  { id: "ceremonial", name: "Ceremonial Matcha", price: 29, image: "/images/ceremonial-cup.jpg", note: "First-harvest leaves sourced from Japan." },
+  { id: "latte", name: "Matcha Latte Blend", price: 24, image: "/images/latte-cup.jpg", dark: true, note: "Stone-ground, silky and made for milk." },
+  { id: "vanilla", name: "Vanilla Matcha", price: 26, image: "/images/vanilla-cup.jpg", note: "Soft vanilla notes with everyday energy." },
+  { id: "coconut", name: "Coconut Matcha", price: 28, image: "/images/coconut-cup.jpg", note: "Creamy coconut finish, naturally refreshing." },
 ];
 
 const heroRituals = ["Ceremonial", "Latte Blend", "Vanilla", "Strawberry", "Mango"];
@@ -47,7 +47,7 @@ const benefits = [
    ───────────────────────────────────────────────────────────── */
 function ArrowIcon({ diagonal = false }: { diagonal?: boolean }) {
   return (
-    <svg viewBox="0 0 20 20" aria-hidden="true" style={diagonal ? { transform: "rotate(-45deg)" } : undefined}>
+    <svg viewBox="0 0 20 20" aria-hidden="true" style={diagonal ? { transform: "rotate(-45deg)", transition: "transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)" } : undefined}>
       <path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -122,6 +122,23 @@ function Line({ children, as: Tag = "span", className = "" }: { children: React.
   );
 }
 
+function ProductCard({ product, onAdd }: { product: Product; onAdd: (p: Product, el: HTMLElement) => void }) {
+  return (
+    <article className={`product-card ${product.dark ? "product-card-dark" : ""}`}>
+      <div className="product-topline">
+        <h3>{product.name}</h3>
+      </div>
+      <div className="product-image-wrap">
+        <Image src={product.image} alt={product.name} width={260} height={300} />
+      </div>
+      <div className="product-footer">
+        <span>From — ${product.price}</span>
+        <button type="button" onClick={(e) => onAdd(product, e.currentTarget)} aria-label={`Add ${product.name} to bag`}>+</button>
+      </div>
+    </article>
+  );
+}
+
 /* ─────────────────────────────────────────────────────────────
    Page
    ───────────────────────────────────────────────────────────── */
@@ -146,22 +163,6 @@ export default function Home() {
   const cartCount = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
   const cartTotal = products.reduce((sum, product) => sum + product.price * (cart[product.id] ?? 0), 0);
 
-  function ProductCard({ product, onAdd }: { product: Product; onAdd: (p: Product, el: HTMLElement) => void }) {
-  return (
-    <article className={`product-card ${product.dark ? "product-card-dark" : ""}`}>
-      <div className="product-topline">
-        <h3>{product.name}</h3>
-      </div>
-      <div className="product-image-wrap">
-        <Image src={product.image} alt={product.name} width={260} height={300} />
-      </div>
-      <div className="product-footer">
-        <span>From — ${product.price}</span>
-        <button type="button" onClick={(e) => onAdd(product, e.currentTarget)} aria-label={`Add ${product.name} to bag`}>+</button>
-      </div>
-    </article>
-    );
-  }
   /* ── Page motion: one intro sequence + scroll-driven scenes ── */
   useLayoutEffect(() => {
     const root = rootRef.current;
@@ -257,8 +258,8 @@ export default function Home() {
         );
         gsap.fromTo(
           q(".ingredient-panel img"),
-          { yPercent: -2, scale: 1 },
-          { yPercent: 2, scale: 1, ease: "none", scrollTrigger: { trigger: q(".experience-card"), start: "top bottom", end: "bottom top", scrub: true } },
+          { yPercent: -3, scale: 1.04 },
+          { yPercent: 3, scale: 1.04, ease: "none", scrollTrigger: { trigger: q(".experience-card"), start: "top bottom", end: "bottom top", scrub: true } },
         );
         gsap.from(q(".ingredient-note"), {
           y: 20,
@@ -278,7 +279,7 @@ export default function Home() {
           ease: "power3.out",
           scrollTrigger: { trigger: q(".collections-grid"), start: "top 82%", once: true },
         });
-        gsap.from(q(".product-image-wrap img"), {
+        gsap.from(q(".product-image-wrap"), {
           y: 24,
           scale: 0.92,
           opacity: 0,
@@ -414,7 +415,7 @@ export default function Home() {
   const addToCart = (product: Product, source?: HTMLElement | null) => {
     setCart((prev) => ({ ...prev, [product.id]: (prev[product.id] ?? 0) + 1 }));
     showToast(`${product.name} added to your bag`);
-    if (source) gsap.fromTo(source, { scale: 0.85 }, { scale: 1, duration: 0.6, ease: "elastic.out(1, 0.4)", overwrite: true });
+    if (source) gsap.fromTo(source, { scale: 0.85 }, { scale: 1, duration: 0.6, ease: "elastic.out(1, 0.4)", overwrite: true, clearProps: "transform" });
     if (cartBadgeRef.current) gsap.fromTo(cartBadgeRef.current, { scale: 1.5 }, { scale: 1, duration: 0.7, ease: "elastic.out(1, 0.4)", overwrite: true });
   };
 
@@ -621,10 +622,12 @@ export default function Home() {
 
             <aside className="collection-copy ritual-copy" data-reveal>
               <h4>Every Sip, A Better Ritual</h4>
-              <p>Authentic Japanese matcha made to elevate your mornings, enhance focus, and support mindful living.</p>
-              <button type="button" className="pill" onClick={(e) => addToCart(products[0], e.currentTarget)}>
-                Shop Collection <span className="round-arrow"><ArrowIcon /></span>
-              </button>
+              <div className="ritual-bottom">
+                <p>Authentic Japanese matcha made to elevate your mornings, enhance focus, and support mindful living.</p>
+                <button type="button" className="pill" onClick={(e) => addToCart(products[0], e.currentTarget)}>
+                  Shop Collection <span className="round-arrow"><ArrowIcon /></span>
+                </button>
+              </div>
             </aside>
 
             {products.slice(2).map((product) => (
